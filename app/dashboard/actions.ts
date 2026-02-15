@@ -12,13 +12,38 @@ export async function addUser(formData: FormData) {
     }
 
     // Write to the database
-    await prisma.user.create({
-        data: {
-            email,
-            name,
-        },
-    });
+    try {
+        await prisma.user.create({
+            data: {
+                email,
+                name,
+            },
+        });
+    } catch (error) {
+        console.error("Failed to add user:", error);
+        throw new Error("Failed to add user");
+    }
 
     // Make Next.js revalidate the dashboard page
     revalidatePath("/dashboard");
+}
+
+export async function deleteUser(formData: FormData) {
+    const userId = formData.get("id") as string;
+
+    if (!userId) return;
+
+    try {
+        await prisma.user.delete({
+            where: {
+                id: parseInt(userId),
+            },
+        });
+
+        // Refresh the page data
+        revalidatePath("/dashboard");
+    } catch (error) {
+        console.error("Failed to delete user:", error);
+        throw new Error("User not found or database error");
+    }
 }
