@@ -1,31 +1,38 @@
 'use server'
 
 import { prisma } from "@/app/lib/prisma";
+import { UserSchema } from "@/app/lib/schema";
 import { revalidatePath } from "next/cache";
 
 export async function addUser(formData: FormData) {
-    const email = formData.get("email") as string;
-    const name = formData.get("name") as string;
+    // Extract data from formData
+    const rawData = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+    };
 
-    if (!email || !email.includes('@')) {
-        throw new Error("Invalid email");
+    // Validate data against schema
+    const validatedFields = UserSchema.safeParse(rawData);
+
+    // If validation fails, throw an error
+    if (!validatedFields.success) {
+        const errorMessages = validatedFields.error.issues
+            .map((err) => err.message)
+            .join(", ");
+        throw new Error(errorMessages);
     }
 
-    // Write to the database
+    const { name, email } = validatedFields.data;
+
     try {
         await prisma.user.create({
-            data: {
-                email,
-                name,
-            },
+            data: { name, email },
         });
+        revalidatePath("/dashboard");
     } catch (error) {
-        console.error("Failed to add user:", error);
-        throw new Error("Failed to add user");
+        console.error("Database error:", error);
+        throw new Error("Failed to create user. Maybe email already exists?");
     }
-
-    // Make Next.js revalidate the dashboard page
-    revalidatePath("/dashboard");
 }
 
 export async function deleteUser(formData: FormData) {
