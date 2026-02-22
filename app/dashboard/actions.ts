@@ -3,6 +3,7 @@
 import { prisma } from "@/app/lib/prisma";
 import { UserSchema } from "@/app/lib/schema";
 import { revalidatePath } from "next/cache";
+import { parse } from "path";
 
 export async function addUser(formData: FormData) {
     // Extract data from formData
@@ -43,7 +44,7 @@ export async function deleteUser(formData: FormData) {
     try {
         await prisma.user.delete({
             where: {
-                id: parseInt(userId),
+                id: userId,
             },
         });
 

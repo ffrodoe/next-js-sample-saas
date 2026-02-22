@@ -1,8 +1,17 @@
 import { prisma } from "@/app/lib/prisma";
 import { AddUserForm } from "./AddUserForm";
 import { DeleteButton } from "./DeleteButton";
+import { auth, signOut } from "@/auth";
+import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
+    const session = await auth(); // Get session on server
+
+    // If no session — redirect to home page
+    if (!session) {
+        redirect("/");
+    }
+
     const userCount = await prisma.user.count();
     const allUsers = await prisma.user.findMany({
         orderBy: { createdAt: 'desc' }
@@ -11,7 +20,21 @@ export default async function Dashboard() {
     return (
         <div className="p-8 max-w-4xl mx-auto text-black">
             <h1 className="text-3xl font-bold mb-8">MARIO SAAS control panel</h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-2xl font-bold">Dashboard</h1>
+                <div className="flex items-center gap-4">
+                    <p>Logged in as: <span className="font-semibold">{session.user?.email}</span></p>
 
+                    <form action={async () => {
+                        "use server";
+                        await signOut({ redirectTo: "/" });
+                    }}>
+                        <button className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200">
+                            Sign Out
+                        </button>
+                    </form>
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* LEFT COLUMN: Form */}
                 <div className="space-y-6">

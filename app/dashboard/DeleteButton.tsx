@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { deleteUser } from './actions';
 
 interface DeleteButtonProps {
-    userId: number;
+    userId: string;
 }
 
 export function DeleteButton({ userId }: DeleteButtonProps) {
